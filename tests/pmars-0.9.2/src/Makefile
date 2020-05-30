@@ -1,5 +1,5 @@
 # generic UNIX makefile
-CC = gcc			# req. for linux
+CC = clang			# req. for linux
 #CC = cc				# if you don't have gcc
 # Configuration options:
 #
@@ -16,7 +16,7 @@ CC = gcc			# req. for linux
 # (6)   -DXWINGRAPHX    1                   X-Windows graphics (UNIX)
 # (7)   -DPERMUTATE                         enables -P switch
 
-CFLAGS = -O -DEXT94 -DSERVER
+CFLAGS = -O3 -DEXT94 -DSERVER -fno-builtin
 LFLAGS = -x
 # LIB = -lcurses -ltermlib		# enable this one for curses display
 # LIB = -lvgagl -lvga			# enable this one for Linux/SVGA

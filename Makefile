@@ -1,8 +1,8 @@
 # $Id: Makefile,v 1.7 2003/07/13 10:23:18 martinus Exp $
 
-CC = cc
+CC = clang
 CFLAGS = ${OPT} ${DBG}
-OPT = -O -fomit-frame-pointer
+OPT = -O3 -fomit-frame-pointer -Werror -Wall -Wno-unused-variable -Wno-unused-label
 #DBG = -g -DDEBUG=2
 
 # Recommended extra options for gcc:
