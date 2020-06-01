@@ -45,20 +45,7 @@ typedef struct str_toks_st {
   int c;			/* token code */
 } str_toks_t;
 
-/* Data
- *
- * tok_buf[]: globally used to keep the contents of string tokens
- * tok_int:   if the token was a TOK_INT, the value of the token is here
- *
- * str_toks[]: table of multicharacter tokens we identify
- *
- */
-
-#define MAX_ALL_CHARS 256
-static char tok_buf[MAX_ALL_CHARS];
-static int tok_int;
-
-static str_toks_t str_toks[] = {
+static const str_toks_t str_toks[] = {
     { "DAT", TOK_DAT },		/* opcodes */
     { "SPL", TOK_SPL },
     { "MOV", TOK_MOV },
@@ -95,7 +82,8 @@ static str_toks_t str_toks[] = {
 };
 
 
-
+#define MAX_ALL_CHARS 256       /* length of a few buffers */
+ 
 /* NAME
  *     get_tok -- read the next token from a string
  * 
@@ -105,17 +93,18 @@ static str_toks_t str_toks[] = {
  * INPUTS
  *     s -- string to read token from
  *     tok -- where we store the token code of the read token
- * 
+ *     tok_buf -- where we store the value of string tokens
+ *     tok_buf -- where we store the value of integer tokens
  * RESULTS
  *     The token code of the read token is stored into *tok,
  *     with 0 signifying end of input.
  *
  *     If the token was an integer, its value is stored into
- *     the global `tok_int'.  Integers may be in any base >= 10
- *     as according to strtol().
+ *     `tok_int'.  Integers may be in any base >= 10 as 
+ *     according to strtol().
  *
  *     String tokens are converted to upper case when storing
- *     them into the global `tok_str[]'.  They are concatenated
+ *     them into the buffer `tok_str'.  They are concatenated
  *     at 255 characters.
  * 
  * RETURN VALUE
@@ -123,8 +112,6 @@ static str_toks_t str_toks[] = {
  *	to the nul character if at end of input.
  * 
  * GLOBALS
- *     tok_buf[]    -- a string or char token is copied here
- *     tok_int      -- the value of an integer token
  *     str_toks[]   -- used to identify string tokens
  */
 
@@ -139,7 +126,7 @@ skip_white(char const *s)
 
 static
 const char *
-get_tok(const char * s, int *tok )
+get_tok(const char * s, int *tok, char *tok_buf, int *tok_int)
 {
   char *tok_str = tok_buf;
   int i;
@@ -184,7 +171,7 @@ get_tok(const char * s, int *tok )
    */
   if ( isdigit(*s) ||  ( *s == '-' && isdigit(*(s+1)) )) {
     char *endptr;
-    tok_int = strtol( s, &endptr, 0 );
+    *tok_int = strtol( s, &endptr, 0 );
     *tok = TOK_INT;
     return endptr;
   }
@@ -217,28 +204,26 @@ get_tok(const char * s, int *tok )
  *     panic_bad_token -- issue an error message for a bad token and exit(1)
  * 
  * SYNOPSIS
- *     void panic_bad_token( int tok, const char *expected );
+ *     void panic_bad_token( int tok, const char *expected, char *tok_buf, int *tok_int);
  * 
  * INPUTS
  *     tok -- token code of unexpected token
  *     expected -- a string describing what kind of token
- *		   was expected.  e.g. "a modifier".
- * 
+ *		   was expected.  e.g. "a modifier". 
+ *     tok_buf, tok_int -- if the token has semantic value we look
+ *                         for it here.
  * RESULTS
  *     A message Informing the user of the unexpected token,
  *     its possible semantic value, and what type of token
  *     was expected instead.
  * 
- * GLOBALS
- *     tok_buf, tok_int -- if the token has semantic value we look
- *                         for it here.
  * BUGS
  *     The error message should be much better -- not even location
  *     in the source is given here. *sigh*
  */
 static
 void
-panic_bad_token(int tok, const char* expected ) 
+panic_bad_token(int tok, const char* expected, char *tok_buf, int *tok_int) 
 {
   char *errstr = NULL;
   char buf[30];
@@ -250,7 +235,7 @@ panic_bad_token(int tok, const char* expected )
   if ( tok_buf[0] )
     errstr = tok_buf;
   if ( tok == TOK_INT ) {
-    sprintf(buf, "%d", tok_int );
+    sprintf(buf, "%d", *tok_int );
     errstr = buf;
   }
 
@@ -265,13 +250,15 @@ panic_bad_token(int tok, const char* expected )
  *     asm_line -- assemble a line to an instruction
  * 
  * SYNOPSIS
- *     int asm_line( const char *line, insn_t *in, unsigned int CORESIZE );
+ *     int asm_line( const char *line, insn_t *in, unsigned int CORESIZE, char *tok_buf, int *tok_int);
  * 
  * INPUTS
  *     line -- line to assemble
  *     in   -- instruction to assemble into
  *     CORESIZE -- size of core
- * 
+ *     tok_buf -- return buffer for string tokens
+ *     tok_int - return location for integer tokens
+ *
  * RESULTS
  *     If there was anything to assemble, it is assembled into
  *     `in'.  If there was a START label, the corresponding flag
@@ -294,19 +281,21 @@ panic_bad_token(int tok, const char* expected )
  *     ASMLINE_NONE : nothing to assemble on this line.
  *     ASMLINE_OK   : assembled instruction into `in' OK.
  * 
- * GLOBALS
- *     tok_int, tok_buf[], str_toks[] somewhere down the line.
  */
 
 int
-asm_line(const char * line, insn_t * in, unsigned int CORESIZE)
+asm_line(const char * line, insn_t * in, unsigned int CORESIZE, char *tok_buf, int *tok_int)
 {
+
+  /* Utility macro only in scope for this function, to invoke panic_bad_token */
+  #define panic_bad_tok(s)   ( panic_bad_token(tok, s, tok_buf, tok_int) )
+
   const char *s = line;
   int tok;
   int flags = 0;
   int op, m, ma, mb;		/* opcode, modifier, a-mode, b-mode */
 
-  s = get_tok( s, &tok );
+  s = get_tok( s, &tok, tok_buf, tok_int);
   if ( tok == 0 ) return ASMLINE_NONE;
 
   /*
@@ -327,7 +316,7 @@ asm_line(const char * line, insn_t * in, unsigned int CORESIZE)
    */
   if ( tok == TOK_START ) {
     flags |= fl_START;
-    s = get_tok( s, &tok );
+    s = get_tok( s, &tok, tok_buf, tok_int);
   }
 
   /* Match opcode
@@ -338,32 +327,31 @@ asm_line(const char * line, insn_t * in, unsigned int CORESIZE)
       return ASMLINE_DONE;	/* signal done assembling */
 
     case TOK_ORG:
-      s = get_tok( s, &tok );	/* get the next token */
+      s = get_tok( s, &tok, tok_buf, tok_int);	/* get the next token */
 
       if ( tok == TOK_START )	/* ignore: */
 	return ASMLINE_NONE;	/* start label already matched and processed */
 
       if ( tok != TOK_INT ) {
-	panic_bad_token( tok, "an integer -- an int or \"START\" "
-			 "follows ORG" );
+	panic_bad_tok( "an integer -- an int or \"START\" follows ORG");
       }
-      in->a = tok_int;
+      in->a = *tok_int;
       return ASMLINE_ORG;
 
     case TOK_PIN:
-      s = get_tok( s, &tok );
+      s = get_tok( s, &tok, tok_buf, tok_int);
       if ( tok != TOK_INT ) {
-	panic_bad_token( tok, "an integer -- PIN must be an unsigned integer");
+	panic_bad_tok("an integer -- PIN must be an unsigned integer");
       }
-      in->a = tok_int;
+      in->a = *tok_int;
       return ASMLINE_PIN;
 
     default:
-      panic_bad_token( tok, "a pseudo-op (internal assembler error)" );
+      panic_bad_tok("a pseudo-op (internal assembler error)");
     }
   }
   if (!( is_tok_opcode(tok)))
-    panic_bad_token( tok, "an opcode" );
+    panic_bad_tok( "an opcode");
 
   op = DAT;
   switch(tok) {
@@ -386,49 +374,49 @@ asm_line(const char * line, insn_t * in, unsigned int CORESIZE)
   case TOK_LDP: op = LDP; break;
   case TOK_STP: op = STP; break;
   default:
-    panic_bad_token( tok, "an opcode" );
+    panic_bad_tok("an opcode");
   }
 
   /* Match modifier
    */
-  s = get_tok( s, &tok );	/* first the '.' */
+  s = get_tok( s, &tok, tok_buf, tok_int);	/* first the '.' */
   if ( tok != '.' )
-    panic_bad_token( tok, "'.'" );
+    panic_bad_tok("'.'" );
 
-  s = get_tok( s, &tok );	/* then the modifier itself */
+  s = get_tok( s, &tok, tok_buf, tok_int);	/* then the modifier itself */
   if ( ! is_tok_modifier(tok) )
-    panic_bad_token( tok, "a modifier");
+    panic_bad_tok("a modifier");
   m = tok - TOK_mF;
 
   /* Match a-field addressing mode and a-field
    */
-  s = get_tok( s, &tok );
+  s = get_tok( s, &tok, tok_buf, tok_int );
   if ( ! is_tok_mode(tok) )
-    panic_bad_token( tok, "an addressing mode specifier");
+    panic_bad_tok("an addressing mode specifier");
   ma = tok - TOK_DIRECT;
 
-  s = get_tok( s, &tok );
+  s = get_tok( s, &tok, tok_buf, tok_int );
   if ( tok != TOK_INT )
-    panic_bad_token( tok, "an integer");
-  in->a = MODS(tok_int,CORESIZE);
+    panic_bad_tok("an integer");
+  in->a = MODS(*tok_int,CORESIZE);
 
   /* Match comma
    */
-  s = get_tok( s, &tok );
+  s = get_tok( s, &tok, tok_buf, tok_int );
   if ( tok != ',' )
-    panic_bad_token( tok, "','" );
+    panic_bad_tok("','" );
 
   /* Match b-field addressing mode and a-field
    */
-  s = get_tok( s, &tok );
+  s = get_tok( s, &tok , tok_buf, tok_int );
   if ( ! is_tok_mode(tok) )
-    panic_bad_token( tok, "an addressing mode specifier");
+    panic_bad_tok( "an addressing mode specifier");
   mb = tok - TOK_DIRECT;
 
-  s = get_tok( s, &tok );
+  s = get_tok( s, &tok , tok_buf, tok_int );
   if ( tok != TOK_INT )
-    panic_bad_token( tok, "an integer");
-  in->b = MODS(tok_int,CORESIZE);
+    panic_bad_tok("an integer");
+  in->b = MODS(*tok_int,CORESIZE);
 
 
   /*
@@ -436,6 +424,8 @@ asm_line(const char * line, insn_t * in, unsigned int CORESIZE)
    */
   in->in = (flags << flPOS) | OP( op, m, ma, mb );
   return ASMLINE_OK;
+
+#undef panic_bad_tok
 }
 
 
@@ -478,18 +468,26 @@ asm_line(const char * line, insn_t * in, unsigned int CORESIZE)
  */
 void
 asm_file(FILE * F, warrior_t *w, unsigned int CORESIZE)
-{
+{ 
+  /* Pointers used to return tokens:
+  * tok_buf[]: used to keep the contents of string tokens
+  * tok_int:   if the token was a TOK_INT, the value of the token is here
+  */
+
+  char tok_buf[MAX_ALL_CHARS];  /* used to return the value of a string token */
+  int ret;			/* return code from asm_line() */
+  int tok_int = 0;              /* if the token was a TOK_INT, the value of the token is returned here */
+
   char line[MAX_ALL_CHARS];
   insn_t *c;
-  int ret;			/* return code from asm_line() */
-
+ 
   w->len = w->start = 0;
   w->have_pin = 0;
   w->pin = 0;
   c = w->code;
 
   while ( fgets(line, MAX_ALL_CHARS, F) ) {
-    ret = asm_line( line, c, CORESIZE );
+    ret = asm_line( line, c, CORESIZE, tok_buf, &tok_int);
     if ( ret == ASMLINE_DONE ) break;
 
     switch ( ret ) {

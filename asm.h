@@ -90,11 +90,10 @@ enum {
 #define is_tok_modifier(t) ( t > TOK_MODIFIER_START && t < TOK_MODIFIER_STOP )
 #define is_tok_mode(t)     ( t > TOK_MODE_START && t < TOK_MODE_STOP )
 
-
 /*
  * protos
  */
-int asm_line( const char *line, insn_t *in, unsigned int CORESIZE );
+int asm_line( const char *line, insn_t *in, unsigned int CORESIZE, char *tok_buf, int *tok_int);
 void asm_file( FILE *F, warrior_t *w, unsigned int CORESIZE );
 void asm_fname( const char *fname, warrior_t *w, unsigned int CORESIZE );
 void dis1( char *s, insn_t in, unsigned int CORESIZE );
