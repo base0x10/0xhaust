@@ -27,10 +27,10 @@
  * of a warrior (i.e. the one given by the START label).
  */
 
-#define mBITS 3			/* number of bits for mode */
-#define opBITS 5		/* bits for opcode */
-#define moBITS 3		/* bits for modifier */
-#define flBITS 2		/* bits for flags */
+#define mBITS 3  /* number of bits for mode */
+#define opBITS 5 /* bits for opcode */
+#define moBITS 3 /* bits for modifier */
+#define flBITS 2 /* bits for flags */
 
 /* Positions of various fields
  */
@@ -43,17 +43,16 @@
 /* Various masks.  These extract a field once it has been
  * shifted to the least significant bits of the word.
  */
-#define moMASK ((1<<moBITS)-1)
-#define opMASK ((1<<opBITS)-1)
-#define mMASK ((1<<mBITS)-1)
-#define flMASK ((1<<flBITS)-1)
-#define iMASK ( (1<<flPOS)-1 )
+#define moMASK ((1 << moBITS) - 1)
+#define opMASK ((1 << opBITS) - 1)
+#define mMASK ((1 << mBITS) - 1)
+#define flMASK ((1 << flBITS) - 1)
+#define iMASK ((1 << flPOS) - 1)
 
 /*
  * Extract the flags of an instruction `in' field
  */
-#define get_flags(in) ( ((in)>>flPOS) & flMASK )
-
+#define get_flags(in) (((in) >> flPOS) & flMASK)
 
 /*
  * OP(o,m,ma,mb): This macro encodes an instruction `in' field
@@ -66,18 +65,17 @@
  *
  *  e.g. OP(SPL, mF, DIRECT, BPREDEC )
  *  is a
- *       spl.f $  , < 
+ *       spl.f $  , <
  */
-#define _OP(o,m) ( ((o)<<moBITS) | (m) )
-#define OP( o, m, ma, mb ) ((_OP((o),(m))<<moPOS) | ((mb) << mbPOS) | (ma))
-
+#define _OP(o, m) (((o) << moBITS) | (m))
+#define OP(o, m, ma, mb) ((_OP((o), (m)) << moPOS) | ((mb) << mbPOS) | (ma))
 
 /*
  * Encodings for various fields of the `in' field.
- * 
+ *
  */
 enum {
-  DAT,				/* must be 0 */
+  DAT, /* must be 0 */
   SPL,
   MOV,
   DJN,
@@ -94,56 +92,59 @@ enum {
   MODM,
   DIV,
   LDP,
-  STP				/* 18 */
+  STP /* 18 */
 };
 
 enum {
-  mF, mA, mB, mAB, mBA, mX, mI	/* 7 */
+  mF,
+  mA,
+  mB,
+  mAB,
+  mBA,
+  mX,
+  mI /* 7 */
 };
 
-enum {				/* must start from 0,
-				   the ordering is important */
-  DIRECT,
-  IMMEDIATE,
-  BINDIRECT,
-  BPREDEC,
-  BPOSTINC,
-  AINDIRECT,
-  APREDEC,
-  APOSTINC		/* 8 */
+enum { /* must start from 0,
+          the ordering is important */
+       DIRECT,
+       IMMEDIATE,
+       BINDIRECT,
+       BPREDEC,
+       BPOSTINC,
+       AINDIRECT,
+       APREDEC,
+       APOSTINC /* 8 */
 };
 
 #define INDIRECT BINDIRECT
-#define PREDEC   BPREDEC
-#define POSTINC  BPOSTINC
+#define PREDEC BPREDEC
+#define POSTINC BPOSTINC
 
 #define INDIR_A(mode) ((mode) >= AINDIRECT)
 
 // mode
-#define RAW_MODE(mode) ((mode) + (INDIRECT-AINDIRECT))
-
+#define RAW_MODE(mode) ((mode) + (INDIRECT - AINDIRECT))
 
 /*
  * flags
  */
 enum {
-  flB_START			/* start label */
+  flB_START /* start label */
 };
 
-#define fl_START (1<<flB_START)
-
+#define fl_START (1 << flB_START)
 
 /* Macros to take things mod CORESIZE
  *
  * Mod here is the `mathematical' modulo, with non-negative
  * results even with x negative.
- * 
+ *
  * MOD(x,M):	x mod CORESIZE
  * MODS(x,M):	x mod CORESIZE
  */
-#define MODS(x,M) ( (int)(x)%(int)(M) >= 0 \
-		  ? (int)(x)%(int)(M) \
-		  : (M) + ((int)(x)%(int)(M)) )
-#define MOD(x,M) ( (x) % (M) )
+#define MODS(x, M) \
+  ((int)(x) % (int)(M) >= 0 ? (int)(x) % (int)(M) : (M) + ((int)(x) % (int)(M)))
+#define MOD(x, M) ((x) % (M))
 
 #endif /* INSN_H */
