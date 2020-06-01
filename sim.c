@@ -910,7 +910,7 @@ int sim_proper(unsigned int nwar, const field_t *const war_pos_tab,
 
 #if DEBUG == 2
     /* Debug output */
-    printf("%6d %4ld  %s  |%4ld, d %4ld,%4ld a %4ld,%4ld b %4ld,%4ld\n", cycles,
+    printf("%6d %4ld  %s  |%4d, d %4ld,%4ld a %4d,%4d b %4d,%4d\n", cycles,
            ip - core, debug_line, w->nprocs, pta - core, ptb - core, ra_a, ra_b,
            rb_a, rb_b);
 #endif

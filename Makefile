@@ -3,12 +3,7 @@
 CC = clang
 CFLAGS = ${OPT} ${DBG}
 OPT = -O3 -fomit-frame-pointer -Werror -Wall -Wno-unused-variable -Wno-unused-label
-#DBG = -g -DDEBUG=2
-
-# Recommended extra options for gcc:
-#OPT += -fomit-frame-pointer -fforce-addr -finline-functions -funroll-loops
-#OPT += -mcpu=i686 -march=i686
-#DBG += -W -Wall -pedantic -ansi
+# DBG = -g -DDEBUG=2
 
 LD = 
 EXECUTABLES = exhaust
@@ -26,6 +21,9 @@ pspace.o: pspace.c
 
 sim.o:	sim.c
 	${CC} ${CFLAGS} -c sim.c
+
+format:
+	clang-format -i -style=Google *.h *.c
 
 clean:
 	rm -f *~ *.o core ${EXECUTABLES}

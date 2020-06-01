@@ -158,9 +158,9 @@ void check_sanity() {
  * These are pMARS compatible.  Warrior 0 is always positioned at 0.
  * posit() and npos() are transcribed from pmars/pos.c.  */
 
-#define RETRIES1                                                 \
-  20               /* how many times to try generating one \ \ \ \
-                    * position */
+#define RETRIES1 \
+  20 /* how many times to try generating one \ \ \ \             \ \ \               \
+      * position */
 #define RETRIES2 4 /* how many times to start backtracking */
 int posit(int32_t *seed) {
   unsigned int pos = 1, i;
