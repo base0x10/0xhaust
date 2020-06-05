@@ -29,8 +29,8 @@
  * File scoped internal #defines, internal structures, and internal prototypes
  *****************************************************************************/
 
-// TODO: you also cannot have both HARDCODED and SINGLETHREADED at the same time fix this
-// #define HARDCODED_CONSTANTS 1
+// TODO: you also cannot have both HARDCODED and SINGLETHREADED at the same time
+// fix this #define HARDCODED_CONSTANTS 1
 #define SINGLE_THREADED_API 1
 
 /* Should we hardcode koth contstants?  By default no */
@@ -127,7 +127,6 @@ static SimState_t *globalstate;
 
 insn_t *sim_alloc_bufs(unsigned int nwar, unsigned int coresize,
                        unsigned int processes, unsigned int cycles) {
-
   int pspacesize = coresize / 16 == 0 ? 1 : coresize / 16;
   return sim_alloc_bufs2(nwar, coresize, processes, cycles, pspacesize);
 }
@@ -136,8 +135,7 @@ insn_t *sim_alloc_bufs2(unsigned int nwar, unsigned int coresize,
                         unsigned int pspace) {
   free_sim(globalstate);
   globalstate = alloc_sim(coresize, pspace, cycles, processes, nwar);
-  if (globalstate)
-    return globalstate->coreMem;
+  if (globalstate) return globalstate->coreMem;
   return NULL;
 }
 
@@ -146,14 +144,12 @@ void sim_free_bufs() { free_sim(globalstate); }
 void sim_clear_core(void) { clear_sim(globalstate); }
 
 pspace_t **sim_get_pspaces(void) {
-  if (globalstate)
-    return globalstate->pspaces;
+  if (globalstate) return globalstate->pspaces;
   return NULL;
 }
 
 pspace_t *sim_get_pspace(unsigned int war_id) {
-  if (globalstate)
-    return globalstate->pspaces[war_id];
+  if (globalstate) return globalstate->pspaces[war_id];
   return NULL;
 }
 
@@ -178,10 +174,8 @@ int sim_load_warrior(unsigned int pos, const insn_t *const code,
   field_t k;
   uint32_t in;
 
-  if (globalstate->coreMem == NULL)
-    return -1;
-  if (len > globalstate->coreSize)
-    return -2;
+  if (globalstate->coreMem == NULL) return -1;
+  if (len > globalstate->coreSize) return -2;
 
   for (i = 0; i < len; i++) {
     k = (pos + i) % globalstate->coreSize;
@@ -198,7 +192,6 @@ int sim_load_warrior(unsigned int pos, const insn_t *const code,
   }
   return 0;
 }
-
 
 int sim(int nwar, field_t w1_start, field_t w2_start, unsigned int cycles,
         void **ptr_result) {
@@ -217,8 +210,7 @@ int sim(int nwar, field_t w1_start, field_t w2_start, unsigned int cycles,
     }
     return -1;
   }
-  if (nwar > 2)
-    return -1;
+  if (nwar > 2) return -1;
 
   /* otherwise set up things for sim_mw() */
   globalstate->cycles = cycles;
@@ -226,22 +218,18 @@ int sim(int nwar, field_t w1_start, field_t w2_start, unsigned int cycles,
   war_pos_tab[1] = w2_start;
 
   alive_cnt = sim_mw(nwar, war_pos_tab, death_tab);
-  if (alive_cnt < 0)
-    return -1;
+  if (alive_cnt < 0) return -1;
 
-  if (nwar == 1)
-    return alive_cnt;
+  if (nwar == 1) return alive_cnt;
 
-  if (alive_cnt == 2)
-    return 2;
+  if (alive_cnt == 2) return 2;
   return death_tab[0] == 0 ? 1 : 0;
 }
 
 int sim_mw(unsigned int nwar, const field_t *const war_pos_tab,
            unsigned int *death_tab) {
   int alive_count;
-  if (!globalstate)
-    return -1;
+  if (!globalstate) return -1;
 
   alive_count = simulate(globalstate, war_pos_tab, death_tab);
 
@@ -283,8 +271,7 @@ static SimState_t *alloc_sim(unsigned int coreSize, unsigned int pspaceSize,
   w_t *warTab = calloc(numWarriors, sizeof(w_t));
   insn_t *coreMem = calloc(coreSize, sizeof(insn_t));
   insn_t **queueMem = calloc(numWarriors * maxProcesses + 1, sizeof(insn_t *));
-  if (!warTab || !coreMem || !queueMem || !pspaces)
-    goto bad_alloc;
+  if (!warTab || !coreMem || !queueMem || !pspaces) goto bad_alloc;
 
   *sim = (SimState_t){coreSize, pspaceSize, cycles,   maxProcesses, numWarriors,
                       warTab,   coreMem,    queueMem, pspaces};
@@ -300,22 +287,20 @@ bad_alloc:
 }
 
 static void free_sim(SimState_t *sim) {
-  if (!sim)
-    return;
+  if (!sim) return;
 
 #ifndef HARDCODED_CONSTANTS
   free_pspaces(sim->numWarriors, sim->pspaces);
   free(sim->warTab);
   free(sim->coreMem);
   free(sim->queueMem);
-#endif // HARDCODED_CONSTANTS
+#endif  // HARDCODED_CONSTANTS
 
   free(sim);
 }
 
 static void clear_sim(SimState_t *sim) {
-  if (!sim)
-    return;
+  if (!sim) return;
 
     /* if we have hardcoded constants, then we clear sim
      * and if we don't have hardcoded constants, then we clear
@@ -337,11 +322,9 @@ static void clear_sim(SimState_t *sim) {
 
 static pspace_t **alloc_pspaces(unsigned int numWarriors,
                                 unsigned int pspacesize) {
-  if (numWarriors == 0)
-    return NULL;
+  if (numWarriors == 0) return NULL;
   pspace_t **pspaces = calloc(numWarriors, sizeof(pspace_t *));
-  if (!pspaces)
-    return pspaces;
+  if (!pspaces) return pspaces;
   for (int i = 0; i < numWarriors; i++) {
     pspaces[i] = pspace_alloc(pspacesize);
     if (!pspaces[i]) {
@@ -353,8 +336,7 @@ static pspace_t **alloc_pspaces(unsigned int numWarriors,
 }
 
 static void free_pspaces(unsigned int numWarriors, pspace_t **pspaces) {
-  if (!pspaces)
-    return;
+  if (!pspaces) return;
   for (int i = 0; i < numWarriors; i++) {
     pspace_free(pspaces[i]);
   }
@@ -407,68 +389,61 @@ static void free_pspaces(unsigned int numWarriors, pspace_t **pspaces) {
 /*#define queue(x)  do { *w->tail++ = (x); if ( w->tail == queue_end )\
                                           w->tail = queue_start; } while (0)
 */
-#define queue(x)                                                               \
-  do {                                                                         \
-    *(w->tail) = (x);                                                          \
-    if (++(w->tail) == queue_end)                                              \
-      w->tail = queue_start;                                                   \
+#define queue(x)                                         \
+  do {                                                   \
+    *(w->tail) = (x);                                    \
+    if (++(w->tail) == queue_end) w->tail = queue_start; \
   } while (0)
 
-#define INCMOD(x)                                                              \
-  do {                                                                         \
-    if (++(x) == core_sz)                                                      \
-      (x) = 0;                                                                 \
+#define INCMOD(x)                  \
+  do {                             \
+    if (++(x) == core_sz) (x) = 0; \
   } while (0)
-#define IPINCMOD(x)                                                            \
-  do {                                                                         \
-    if (++(x) == core_end)                                                     \
-      (x) = core;                                                              \
+#define IPINCMOD(x)                    \
+  do {                                 \
+    if (++(x) == core_end) (x) = core; \
   } while (0)
-#define DECMOD(x)                                                              \
-  do {                                                                         \
-    if ((x)-- == 0)                                                            \
-      (x) = (core_sz - 1);                                                     \
+#define DECMOD(x)                        \
+  do {                                   \
+    if ((x)-- == 0) (x) = (core_sz - 1); \
   } while (0)
-#define IPDECMOD(x)                                                            \
-  do {                                                                         \
-    if ((x) == 0)                                                              \
-      x = core_last;                                                           \
-    else                                                                       \
-      --(x);                                                                   \
+#define IPDECMOD(x)  \
+  do {               \
+    if ((x) == 0)    \
+      x = core_last; \
+    else             \
+      --(x);         \
   } while (0)
-#define ADDMOD(z, x, y)                                                        \
-  do {                                                                         \
-    (z) = (x) + (y);                                                           \
-    if ((z) >= core_sz)                                                        \
-      (z) -= core_sz;                                                          \
+#define ADDMOD(z, x, y)                 \
+  do {                                  \
+    (z) = (x) + (y);                    \
+    if ((z) >= core_sz) (z) -= core_sz; \
   } while (0)
 /*#define SUBMOD(z,x,y) do { (z) = (x)-(y); if ((int)(z)<0) (z) +=
  * core_sz; } while (0)*/
 /* z is unsigned! overflow occurs. */
-#define SUBMOD(z, x, y)                                                        \
-  do {                                                                         \
-    (z) = (x) - (y);                                                           \
-    if ((z) >= core_sz)                                                        \
-      (z) += core_sz;                                                          \
+#define SUBMOD(z, x, y)                 \
+  do {                                  \
+    (z) = (x) - (y);                    \
+    if ((z) >= core_sz) (z) += core_sz; \
   } while (0)
 
 /* private macros to access p-space. */
-#define UNSAFE_PSPACE_SET(warid, paddr, val)                                   \
-  do {                                                                         \
-    if (paddr) {                                                               \
-      sim->pspaces[(warid)]->mem[(paddr)] = (val);                             \
-    } else {                                                                   \
-      sim->pspaces[(warid)]->lastresult = (val);                               \
-    }                                                                          \
+#define UNSAFE_PSPACE_SET(warid, paddr, val)       \
+  do {                                             \
+    if (paddr) {                                   \
+      sim->pspaces[(warid)]->mem[(paddr)] = (val); \
+    } else {                                       \
+      sim->pspaces[(warid)]->lastresult = (val);   \
+    }                                              \
   } while (0)
 
-#define UNSAFE_PSPACE_GET(warid, paddr)                                        \
-  ((paddr) ? sim->pspaces[(warid)]->mem[(paddr)]                               \
+#define UNSAFE_PSPACE_GET(warid, paddr)          \
+  ((paddr) ? sim->pspaces[(warid)]->mem[(paddr)] \
            : sim->pspaces[(warid)]->lastresult)
 
 static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
                     unsigned int *death_tab) {
-
   // insn_t *const core = Core_Mem;
   // w_t *w; /* current warrior */
   // const unsigned int core_sz = Coresize;
@@ -555,7 +530,7 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
   insn_t *const core = sim->coreMem;
   insn_t **const queue_end = sim->queueMem + nwar * max_proc + 1;
   insn_t **const queue_start = sim->queueMem;
-  insn_t *const core_end = core + core_sz; // point after last instruction
+  insn_t *const core_end = core + core_sz;  // point after last instruction
   int alive_cnt = nwar;
   int max_alive_proc = nwar * max_proc;
 
@@ -576,10 +551,8 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     insn_t **pofs = queue_end - 1;
     do {
       int t = nwar - 1 - ftmp;
-      if (t > 0)
-        sim->warTab[t].succ = &(sim->warTab[t - 1]);
-      if (t < nwar - 1)
-        sim->warTab[t].pred = &(sim->warTab[t + 1]);
+      if (t > 0) sim->warTab[t].succ = &(sim->warTab[t - 1]);
+      if (t < nwar - 1) sim->warTab[t].pred = &(sim->warTab[t + 1]);
       pofs -= max_proc;
       *pofs = &(core[war_pos_tab[ftmp]]);
       sim->warTab[t].head = pofs;
@@ -609,8 +582,7 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     unsigned int mode;
 
     insn_t *ip = *(w->head);
-    if (++(w->head) == queue_end)
-      w->head = queue_start;
+    if (++(w->head) == queue_end) w->head = queue_start;
     in = ip->in; /* note: flags must be unset! */
 #if !SIM_STRIP_FLAGS
     in = in & iMASK; /* strip flags. */
@@ -633,30 +605,25 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     } else if (mode == DIRECT) {
       /*printf("DIRECT\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       ra_a = pta->a;
       ra_b = pta->b;
     } else if (mode == BINDIRECT) {
       /*printf("BINDIRECT\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       pta = pta + pta->b;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       ra_a = pta->a; /* read in registers */
       ra_b = pta->b;
     } else if (mode == APOSTINC) {
       /*printf("APOSTINC\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       {
         field_t *f = &(pta->a);
         pta = pta + pta->a;
-        if (pta >= core_end)
-          pta -= core_sz;
+        if (pta >= core_end) pta -= core_sz;
         ra_a = pta->a; /* read in registers */
         ra_b = pta->b;
         INCMOD(*f);
@@ -664,13 +631,11 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     } else if (mode == BPOSTINC) {
       /*printf("BPOSTINC\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       {
         field_t *f = &(pta->b);
         pta = pta + pta->b;
-        if (pta >= core_end)
-          pta -= core_sz;
+        if (pta >= core_end) pta -= core_sz;
         ra_a = pta->a; /* read in registers */
         ra_b = pta->b;
         INCMOD(*f);
@@ -678,33 +643,27 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     } else if (mode == APREDEC) {
       /*printf("APREDEC\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       DECMOD(pta->a);
       pta = pta + pta->a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       ra_a = pta->a; /* read in registers */
       ra_b = pta->b;
     } else if (mode == BPREDEC) {
       /*printf("BPREDEC\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       DECMOD(pta->b);
       pta = pta + pta->b;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       ra_a = pta->a; /* read in registers */
       ra_b = pta->b;
     } else { /* AINDIRECT */
       /*printf("AINDIRECT\n");*/
       pta = ip + ra_a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       pta = pta + pta->a;
-      if (pta >= core_end)
-        pta -= core_sz;
+      if (pta >= core_end) pta -= core_sz;
       ra_a = pta->a; /* read in registers */
       ra_b = pta->b;
     }
@@ -715,62 +674,49 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     if ((in & 16320) == (_OP(MOV, mI) << (mBITS * 2))) {
       if (mode == APREDEC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         DECMOD(ptb->a);
         ptb = ptb + ptb->a;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
       } else if (mode == DIRECT << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
       } else if (mode == APOSTINC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         {
           field_t *f = &(ptb->a);
           ptb = ptb + *f;
-          if (ptb >= core_end)
-            ptb -= core_sz;
+          if (ptb >= core_end) ptb -= core_sz;
           INCMOD(*f);
         }
       } else if (mode == BPREDEC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         DECMOD(ptb->b);
         ptb = ptb + ptb->b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
       } else if (mode == IMMEDIATE << mBITS) {
         ptb = ip;
       } else if (mode == BPOSTINC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         {
           field_t *f = &(ptb->b);
           ptb = ptb + *f;
-          if (ptb >= core_end)
-            ptb -= core_sz;
+          if (ptb >= core_end) ptb -= core_sz;
           INCMOD(*f);
         }
       } else if (mode == BINDIRECT << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         ptb = ptb + ptb->b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
       } else { /* AINDIRECT */
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         ptb = ptb + ptb->a;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
       }
       ptb->a = ra_a;
       ptb->b = ra_b;
@@ -790,23 +736,19 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
       } else if (mode == DIRECT << mBITS) {
       } else if (mode == BPOSTINC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         INCMOD(ptb->b);
       } else if (mode == BPREDEC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         DECMOD(ptb->b);
       } else if (mode == APREDEC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         DECMOD(ptb->a);
       } else if (mode == APOSTINC << mBITS) {
         ptb = ip + rb_b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         INCMOD(ptb->a);
       } /* BINDIRECT, AINDIRECT */
 
@@ -832,15 +774,13 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
         }
       } else {
       die:
-        if (--w->nProcs)
-          goto noqueue;
+        if (--w->nProcs) goto noqueue;
         w->pred->succ = w->succ;
         w->succ->pred = w->pred;
         *death_tab++ = w->id;
         cycles = cycles - cycles / alive_cnt; /* nC+k -> (n-1)C+k */
         max_alive_proc = alive_cnt * max_proc;
-        if (--alive_cnt <= 1)
-          goto out;
+        if (--alive_cnt <= 1) goto out;
       }
       goto noqueue;
     }
@@ -849,31 +789,26 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     if (mode == APREDEC << mBITS) {
       /*printf("APREDEC\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       DECMOD(ptb->a);
       ptb = ptb + ptb->a;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       rb_a = ptb->a; /* read in registers */
       rb_b = ptb->b;
     } else if (mode == DIRECT << mBITS) {
       /*printf("DIRECT\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       rb_a = ptb->a;
       rb_b = ptb->b;
     } else if (mode == APOSTINC << mBITS) {
       /*printf("APOSTINC\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       {
         field_t *f = &(ptb->a);
         ptb = ptb + ptb->a;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         rb_a = ptb->a; /* read in registers */
         rb_b = ptb->b;
         INCMOD(*f);
@@ -881,12 +816,10 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     } else if (mode == BPREDEC << mBITS) {
       /*printf("BPREDEC\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       DECMOD(ptb->b);
       ptb = ptb + ptb->b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       rb_a = ptb->a; /* read in registers */
       rb_b = ptb->b;
     } else if (mode == IMMEDIATE << mBITS) {
@@ -895,13 +828,11 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     } else if (mode == BPOSTINC << mBITS) {
       /*printf("BPOSTINC\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       {
         field_t *f = &(ptb->b);
         ptb = ptb + ptb->b;
-        if (ptb >= core_end)
-          ptb -= core_sz;
+        if (ptb >= core_end) ptb -= core_sz;
         rb_a = ptb->a; /* read in registers */
         rb_b = ptb->b;
         INCMOD(*f);
@@ -909,21 +840,17 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
     } else if (mode == BINDIRECT << mBITS) {
       /*printf("BINDIRECT\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       ptb = ptb + ptb->b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       rb_a = ptb->a; /* read in registers */
       rb_b = ptb->b;
     } else { /* AINDIRECT */
       /*printf("AINDIRECT\n");*/
       ptb = ip + rb_b;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       ptb = ptb + ptb->a;
-      if (ptb >= core_end)
-        ptb -= core_sz;
+      if (ptb >= core_end) ptb -= core_sz;
       rb_a = ptb->a; /* read in registers */
       rb_b = ptb->b;
     }
@@ -940,370 +867,323 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
      */
 
     switch (in >> (mBITS * 2)) {
-    case _OP(MOV, mA):
-      ptb->a = ra_a;
-      break;
-    case _OP(MOV, mF):
-      ptb->a = ra_a;
-    case _OP(MOV, mB):
-      ptb->b = ra_b;
-      break;
-    case _OP(MOV, mAB):
-      ptb->b = ra_a;
-      break;
-    case _OP(MOV, mX):
-      ptb->b = ra_a;
-    case _OP(MOV, mBA):
-      ptb->a = ra_b;
-      break;
-
-    case _OP(MOV, mI):
-      printf("unreachable code reached. You have a problem!\n");
-      break;
-
-    case _OP(DJN, mBA):
-    case _OP(DJN, mA):
-      DECMOD(ptb->a);
-      if (rb_a == 1)
+      case _OP(MOV, mA):
+        ptb->a = ra_a;
         break;
-      queue(pta);
-      goto noqueue;
-
-    case _OP(DJN, mAB):
-    case _OP(DJN, mB):
-      DECMOD(ptb->b);
-      if (rb_b == 1)
+      case _OP(MOV, mF):
+        ptb->a = ra_a;
+      case _OP(MOV, mB):
+        ptb->b = ra_b;
         break;
-      queue(pta);
-      goto noqueue;
-
-    case _OP(DJN, mX):
-    case _OP(DJN, mI):
-    case _OP(DJN, mF):
-      DECMOD(ptb->a);
-      DECMOD(ptb->b);
-      if (rb_a == 1 && rb_b == 1)
+      case _OP(MOV, mAB):
+        ptb->b = ra_a;
         break;
-      queue(pta);
-      goto noqueue;
-
-    case _OP(ADD, mI):
-    case _OP(ADD, mF):
-      ADDMOD(ptb->b, ra_b, rb_b);
-    case _OP(ADD, mA):
-      ADDMOD(ptb->a, ra_a, rb_a);
-      break;
-    case _OP(ADD, mB):
-      ADDMOD(ptb->b, ra_b, rb_b);
-      break;
-    case _OP(ADD, mX):
-      ADDMOD(ptb->a, ra_b, rb_a);
-    case _OP(ADD, mAB):
-      ADDMOD(ptb->b, ra_a, rb_b);
-      break;
-    case _OP(ADD, mBA):
-      ADDMOD(ptb->a, ra_b, rb_a);
-      break;
-
-    case _OP(JMZ, mBA):
-    case _OP(JMZ, mA):
-      if (rb_a)
+      case _OP(MOV, mX):
+        ptb->b = ra_a;
+      case _OP(MOV, mBA):
+        ptb->a = ra_b;
         break;
-      queue(pta);
-      goto noqueue;
 
-    case _OP(JMZ, mAB):
-    case _OP(JMZ, mB):
-      if (rb_b)
+      case _OP(MOV, mI):
+        printf("unreachable code reached. You have a problem!\n");
         break;
-      queue(pta);
-      goto noqueue;
 
-    case _OP(JMZ, mX):
-    case _OP(JMZ, mF):
-    case _OP(JMZ, mI):
-      if (rb_a || rb_b)
-        break;
-      queue(pta);
-      goto noqueue;
-
-    case _OP(SUB, mI):
-    case _OP(SUB, mF):
-      SUBMOD(ptb->b, rb_b, ra_b);
-    case _OP(SUB, mA):
-      SUBMOD(ptb->a, rb_a, ra_a);
-      break;
-    case _OP(SUB, mB):
-      SUBMOD(ptb->b, rb_b, ra_b);
-      break;
-    case _OP(SUB, mX):
-      SUBMOD(ptb->a, rb_a, ra_b);
-    case _OP(SUB, mAB):
-      SUBMOD(ptb->b, rb_b, ra_a);
-      break;
-    case _OP(SUB, mBA):
-      SUBMOD(ptb->a, rb_a, ra_b);
-      break;
-
-    case _OP(SEQ, mA):
-      if (ra_a == rb_a)
-        IPINCMOD(ip);
-      break;
-    case _OP(SEQ, mB):
-      if (ra_b == rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SEQ, mAB):
-      if (ra_a == rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SEQ, mBA):
-      if (ra_b == rb_a)
-        IPINCMOD(ip);
-      break;
-
-    case _OP(SEQ, mI):
-      if (pta->in != ptb->in)
-        break;
-    case _OP(SEQ, mF):
-      if (ra_a == rb_a && ra_b == rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SEQ, mX):
-      if (ra_a == rb_b && ra_b == rb_a)
-        IPINCMOD(ip);
-      break;
-
-    case _OP(SNE, mA):
-      if (ra_a != rb_a)
-        IPINCMOD(ip);
-      break;
-    case _OP(SNE, mB):
-      if (ra_b != rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SNE, mAB):
-      if (ra_a != rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SNE, mBA):
-      if (ra_b != rb_a)
-        IPINCMOD(ip);
-      break;
-
-    case _OP(SNE, mI):
-      if (pta->in != ptb->in) {
-        IPINCMOD(ip);
-        break;
-      }
-      /* fall through */
-    case _OP(SNE, mF):
-      if (ra_a != rb_a || ra_b != rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SNE, mX):
-      if (ra_a != rb_b || ra_b != rb_a)
-        IPINCMOD(ip);
-      break;
-
-    case _OP(JMN, mBA):
-    case _OP(JMN, mA):
-      if (!rb_a)
-        break;
-      queue(pta);
-      goto noqueue;
-
-    case _OP(JMN, mAB):
-    case _OP(JMN, mB):
-      if (!rb_b)
-        break;
-      queue(pta);
-      goto noqueue;
-
-    case _OP(JMN, mX):
-    case _OP(JMN, mF):
-    case _OP(JMN, mI):
-      if (rb_a || rb_b) {
+      case _OP(DJN, mBA):
+      case _OP(DJN, mA):
+        DECMOD(ptb->a);
+        if (rb_a == 1) break;
         queue(pta);
         goto noqueue;
-      }
-      break;
 
-    case _OP(JMP, mA):
-    case _OP(JMP, mB):
-    case _OP(JMP, mAB):
-    case _OP(JMP, mBA):
-    case _OP(JMP, mX):
-    case _OP(JMP, mF):
-    case _OP(JMP, mI):
-      queue(pta);
-      goto noqueue;
+      case _OP(DJN, mAB):
+      case _OP(DJN, mB):
+        DECMOD(ptb->b);
+        if (rb_b == 1) break;
+        queue(pta);
+        goto noqueue;
 
-    case _OP(SLT, mA):
-      if (ra_a < rb_a)
-        IPINCMOD(ip);
-      break;
-    case _OP(SLT, mAB):
-      if (ra_a < rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SLT, mB):
-      if (ra_b < rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SLT, mBA):
-      if (ra_b < rb_a)
-        IPINCMOD(ip);
-      break;
-    case _OP(SLT, mI):
-    case _OP(SLT, mF):
-      if (ra_a < rb_a && ra_b < rb_b)
-        IPINCMOD(ip);
-      break;
-    case _OP(SLT, mX):
-      if (ra_a < rb_b && ra_b < rb_a)
-        IPINCMOD(ip);
-      break;
+      case _OP(DJN, mX):
+      case _OP(DJN, mI):
+      case _OP(DJN, mF):
+        DECMOD(ptb->a);
+        DECMOD(ptb->b);
+        if (rb_a == 1 && rb_b == 1) break;
+        queue(pta);
+        goto noqueue;
 
-    case _OP(MODM, mI):
-    case _OP(MODM, mF):
-      if (ra_a)
+      case _OP(ADD, mI):
+      case _OP(ADD, mF):
+        ADDMOD(ptb->b, ra_b, rb_b);
+      case _OP(ADD, mA):
+        ADDMOD(ptb->a, ra_a, rb_a);
+        break;
+      case _OP(ADD, mB):
+        ADDMOD(ptb->b, ra_b, rb_b);
+        break;
+      case _OP(ADD, mX):
+        ADDMOD(ptb->a, ra_b, rb_a);
+      case _OP(ADD, mAB):
+        ADDMOD(ptb->b, ra_a, rb_b);
+        break;
+      case _OP(ADD, mBA):
+        ADDMOD(ptb->a, ra_b, rb_a);
+        break;
+
+      case _OP(JMZ, mBA):
+      case _OP(JMZ, mA):
+        if (rb_a) break;
+        queue(pta);
+        goto noqueue;
+
+      case _OP(JMZ, mAB):
+      case _OP(JMZ, mB):
+        if (rb_b) break;
+        queue(pta);
+        goto noqueue;
+
+      case _OP(JMZ, mX):
+      case _OP(JMZ, mF):
+      case _OP(JMZ, mI):
+        if (rb_a || rb_b) break;
+        queue(pta);
+        goto noqueue;
+
+      case _OP(SUB, mI):
+      case _OP(SUB, mF):
+        SUBMOD(ptb->b, rb_b, ra_b);
+      case _OP(SUB, mA):
+        SUBMOD(ptb->a, rb_a, ra_a);
+        break;
+      case _OP(SUB, mB):
+        SUBMOD(ptb->b, rb_b, ra_b);
+        break;
+      case _OP(SUB, mX):
+        SUBMOD(ptb->a, rb_a, ra_b);
+      case _OP(SUB, mAB):
+        SUBMOD(ptb->b, rb_b, ra_a);
+        break;
+      case _OP(SUB, mBA):
+        SUBMOD(ptb->a, rb_a, ra_b);
+        break;
+
+      case _OP(SEQ, mA):
+        if (ra_a == rb_a) IPINCMOD(ip);
+        break;
+      case _OP(SEQ, mB):
+        if (ra_b == rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SEQ, mAB):
+        if (ra_a == rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SEQ, mBA):
+        if (ra_b == rb_a) IPINCMOD(ip);
+        break;
+
+      case _OP(SEQ, mI):
+        if (pta->in != ptb->in) break;
+      case _OP(SEQ, mF):
+        if (ra_a == rb_a && ra_b == rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SEQ, mX):
+        if (ra_a == rb_b && ra_b == rb_a) IPINCMOD(ip);
+        break;
+
+      case _OP(SNE, mA):
+        if (ra_a != rb_a) IPINCMOD(ip);
+        break;
+      case _OP(SNE, mB):
+        if (ra_b != rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SNE, mAB):
+        if (ra_a != rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SNE, mBA):
+        if (ra_b != rb_a) IPINCMOD(ip);
+        break;
+
+      case _OP(SNE, mI):
+        if (pta->in != ptb->in) {
+          IPINCMOD(ip);
+          break;
+        }
+        /* fall through */
+      case _OP(SNE, mF):
+        if (ra_a != rb_a || ra_b != rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SNE, mX):
+        if (ra_a != rb_b || ra_b != rb_a) IPINCMOD(ip);
+        break;
+
+      case _OP(JMN, mBA):
+      case _OP(JMN, mA):
+        if (!rb_a) break;
+        queue(pta);
+        goto noqueue;
+
+      case _OP(JMN, mAB):
+      case _OP(JMN, mB):
+        if (!rb_b) break;
+        queue(pta);
+        goto noqueue;
+
+      case _OP(JMN, mX):
+      case _OP(JMN, mF):
+      case _OP(JMN, mI):
+        if (rb_a || rb_b) {
+          queue(pta);
+          goto noqueue;
+        }
+        break;
+
+      case _OP(JMP, mA):
+      case _OP(JMP, mB):
+      case _OP(JMP, mAB):
+      case _OP(JMP, mBA):
+      case _OP(JMP, mX):
+      case _OP(JMP, mF):
+      case _OP(JMP, mI):
+        queue(pta);
+        goto noqueue;
+
+      case _OP(SLT, mA):
+        if (ra_a < rb_a) IPINCMOD(ip);
+        break;
+      case _OP(SLT, mAB):
+        if (ra_a < rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SLT, mB):
+        if (ra_b < rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SLT, mBA):
+        if (ra_b < rb_a) IPINCMOD(ip);
+        break;
+      case _OP(SLT, mI):
+      case _OP(SLT, mF):
+        if (ra_a < rb_a && ra_b < rb_b) IPINCMOD(ip);
+        break;
+      case _OP(SLT, mX):
+        if (ra_a < rb_b && ra_b < rb_a) IPINCMOD(ip);
+        break;
+
+      case _OP(MODM, mI):
+      case _OP(MODM, mF):
+        if (ra_a) ptb->a = rb_a % ra_a;
+        if (ra_b) ptb->b = rb_b % ra_b;
+        if (!ra_a || !ra_b) goto die;
+        break;
+      case _OP(MODM, mX):
+        if (ra_b) ptb->a = rb_a % ra_b;
+        if (ra_a) ptb->b = rb_b % ra_a;
+        if (!ra_b || !ra_a) goto die;
+        break;
+      case _OP(MODM, mA):
+        if (!ra_a) goto die;
         ptb->a = rb_a % ra_a;
-      if (ra_b)
+        break;
+      case _OP(MODM, mB):
+        if (!ra_b) goto die;
         ptb->b = rb_b % ra_b;
-      if (!ra_a || !ra_b)
-        goto die;
-      break;
-    case _OP(MODM, mX):
-      if (ra_b)
-        ptb->a = rb_a % ra_b;
-      if (ra_a)
+        break;
+      case _OP(MODM, mAB):
+        if (!ra_a) goto die;
         ptb->b = rb_b % ra_a;
-      if (!ra_b || !ra_a)
-        goto die;
-      break;
-    case _OP(MODM, mA):
-      if (!ra_a)
-        goto die;
-      ptb->a = rb_a % ra_a;
-      break;
-    case _OP(MODM, mB):
-      if (!ra_b)
-        goto die;
-      ptb->b = rb_b % ra_b;
-      break;
-    case _OP(MODM, mAB):
-      if (!ra_a)
-        goto die;
-      ptb->b = rb_b % ra_a;
-      break;
-    case _OP(MODM, mBA):
-      if (!ra_b)
-        goto die;
-      ptb->a = rb_a % ra_b;
-      break;
+        break;
+      case _OP(MODM, mBA):
+        if (!ra_b) goto die;
+        ptb->a = rb_a % ra_b;
+        break;
 
-    case _OP(MUL, mI):
-    case _OP(MUL, mF):
-      ptb->b = (rb_b * ra_b) % core_sz;
-    case _OP(MUL, mA):
-      ptb->a = (rb_a * ra_a) % core_sz;
-      break;
-    case _OP(MUL, mB):
-      ptb->b = (rb_b * ra_b) % core_sz;
-      break;
-    case _OP(MUL, mX):
-      ptb->a = (rb_a * ra_b) % core_sz;
-    case _OP(MUL, mAB):
-      ptb->b = (rb_b * ra_a) % core_sz;
-      break;
-    case _OP(MUL, mBA):
-      ptb->a = (rb_a * ra_b) % core_sz;
-      break;
+      case _OP(MUL, mI):
+      case _OP(MUL, mF):
+        ptb->b = (rb_b * ra_b) % core_sz;
+      case _OP(MUL, mA):
+        ptb->a = (rb_a * ra_a) % core_sz;
+        break;
+      case _OP(MUL, mB):
+        ptb->b = (rb_b * ra_b) % core_sz;
+        break;
+      case _OP(MUL, mX):
+        ptb->a = (rb_a * ra_b) % core_sz;
+      case _OP(MUL, mAB):
+        ptb->b = (rb_b * ra_a) % core_sz;
+        break;
+      case _OP(MUL, mBA):
+        ptb->a = (rb_a * ra_b) % core_sz;
+        break;
 
-    case _OP(DIV, mI):
-    case _OP(DIV, mF):
-      if (ra_a)
+      case _OP(DIV, mI):
+      case _OP(DIV, mF):
+        if (ra_a) ptb->a = rb_a / ra_a;
+        if (ra_b) ptb->b = rb_b / ra_b;
+        if (!ra_a || !ra_b) goto die;
+        break;
+      case _OP(DIV, mX):
+        if (ra_b) ptb->a = rb_a / ra_b;
+        if (ra_a) ptb->b = rb_b / ra_a;
+        if (!ra_b || !ra_a) goto die;
+        break;
+      case _OP(DIV, mA):
+        if (!ra_a) goto die;
         ptb->a = rb_a / ra_a;
-      if (ra_b)
+        break;
+      case _OP(DIV, mB):
+        if (!ra_b) goto die;
         ptb->b = rb_b / ra_b;
-      if (!ra_a || !ra_b)
-        goto die;
-      break;
-    case _OP(DIV, mX):
-      if (ra_b)
-        ptb->a = rb_a / ra_b;
-      if (ra_a)
+        break;
+      case _OP(DIV, mAB):
+        if (!ra_a) goto die;
         ptb->b = rb_b / ra_a;
-      if (!ra_b || !ra_a)
-        goto die;
-      break;
-    case _OP(DIV, mA):
-      if (!ra_a)
-        goto die;
-      ptb->a = rb_a / ra_a;
-      break;
-    case _OP(DIV, mB):
-      if (!ra_b)
-        goto die;
-      ptb->b = rb_b / ra_b;
-      break;
-    case _OP(DIV, mAB):
-      if (!ra_a)
-        goto die;
-      ptb->b = rb_b / ra_a;
-      break;
-    case _OP(DIV, mBA):
-      if (!ra_b)
-        goto die;
-      ptb->a = rb_a / ra_b;
-      break;
+        break;
+      case _OP(DIV, mBA):
+        if (!ra_b) goto die;
+        ptb->a = rb_a / ra_b;
+        break;
 
-    case _OP(NOP, mI):
-    case _OP(NOP, mX):
-    case _OP(NOP, mF):
-    case _OP(NOP, mA):
-    case _OP(NOP, mAB):
-    case _OP(NOP, mB):
-    case _OP(NOP, mBA):
-      break;
+      case _OP(NOP, mI):
+      case _OP(NOP, mX):
+      case _OP(NOP, mF):
+      case _OP(NOP, mA):
+      case _OP(NOP, mAB):
+      case _OP(NOP, mB):
+      case _OP(NOP, mBA):
+        break;
 
-    case _OP(LDP, mA):
-      ptb->a = UNSAFE_PSPACE_GET(w->id, ra_a % pspace_sz);
-      break;
-    case _OP(LDP, mAB):
-      ptb->b = UNSAFE_PSPACE_GET(w->id, ra_a % pspace_sz);
-      break;
-    case _OP(LDP, mBA):
-      ptb->a = UNSAFE_PSPACE_GET(w->id, ra_b % pspace_sz);
-      break;
-    case _OP(LDP, mF):
-    case _OP(LDP, mX):
-    case _OP(LDP, mI):
-    case _OP(LDP, mB):
-      ptb->b = UNSAFE_PSPACE_GET(w->id, ra_b % pspace_sz);
-      break;
+      case _OP(LDP, mA):
+        ptb->a = UNSAFE_PSPACE_GET(w->id, ra_a % pspace_sz);
+        break;
+      case _OP(LDP, mAB):
+        ptb->b = UNSAFE_PSPACE_GET(w->id, ra_a % pspace_sz);
+        break;
+      case _OP(LDP, mBA):
+        ptb->a = UNSAFE_PSPACE_GET(w->id, ra_b % pspace_sz);
+        break;
+      case _OP(LDP, mF):
+      case _OP(LDP, mX):
+      case _OP(LDP, mI):
+      case _OP(LDP, mB):
+        ptb->b = UNSAFE_PSPACE_GET(w->id, ra_b % pspace_sz);
+        break;
 
-    case _OP(STP, mA):
-      UNSAFE_PSPACE_SET(w->id, rb_a % pspace_sz, ra_a);
-      break;
-    case _OP(STP, mAB):
-      UNSAFE_PSPACE_SET(w->id, rb_b % pspace_sz, ra_a);
-      break;
-    case _OP(STP, mBA):
-      UNSAFE_PSPACE_SET(w->id, rb_a % pspace_sz, ra_b);
-      break;
-    case _OP(STP, mF):
-    case _OP(STP, mX):
-    case _OP(STP, mI):
-    case _OP(STP, mB):
-      UNSAFE_PSPACE_SET(w->id, rb_b % pspace_sz, ra_b);
-      break;
+      case _OP(STP, mA):
+        UNSAFE_PSPACE_SET(w->id, rb_a % pspace_sz, ra_a);
+        break;
+      case _OP(STP, mAB):
+        UNSAFE_PSPACE_SET(w->id, rb_b % pspace_sz, ra_a);
+        break;
+      case _OP(STP, mBA):
+        UNSAFE_PSPACE_SET(w->id, rb_a % pspace_sz, ra_b);
+        break;
+      case _OP(STP, mF):
+      case _OP(STP, mX):
+      case _OP(STP, mI):
+      case _OP(STP, mB):
+        UNSAFE_PSPACE_SET(w->id, rb_b % pspace_sz, ra_b);
+        break;
 
 #if DEBUG > 0
-    default:
-      alive_cnt = -1;
-      goto out;
+      default:
+        alive_cnt = -1;
+        goto out;
 #endif
     }
 
