@@ -31,7 +31,7 @@
 
 // TODO: you also cannot have both HARDCODED and SINGLETHREADED at the same time
 // fix this #define HARDCODED_CONSTANTS 1
-#define SINGLE_THREADED_API 1
+// #define SINGLE_THREADED_API 1
 
 /* Should we hardcode koth contstants?  By default no */
 #ifdef HARDCODED_CONSTANTS
@@ -117,6 +117,8 @@ static void free_pspaces(unsigned int nwar, pspace_t **pspaces);
 /******************************************************************************
  * Thread Safe Public API Implementation
  *****************************************************************************/
+
+
 
 /******************************************************************************
  * Thread Unsafe Public API Implementation
