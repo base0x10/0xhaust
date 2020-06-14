@@ -7,7 +7,6 @@
 // #define SINGLE_THREADED_API 1
 // #define HARDCODED_CONSTANTS
 
-
 // TODO: you also cannot have both HARDCODED and SINGLETHREADED at the same time
 // fix this #define HARDCODED_CONSTANTS 1
 // #define SINGLE_THREADED_API 1
@@ -107,7 +106,8 @@ int sim_load_warrior(SimState_t *sim, unsigned int pos,
  *
  * returns number of living warriors
  */
-int sim_simulate(SimState_t *sim, field_t *war_pos_tab, unsigned int *death_tab);
+int sim_simulate(SimState_t *sim, field_t *war_pos_tab,
+                 unsigned int *death_tab);
 
 /*
  * Refer to README for how to use pspace functions
