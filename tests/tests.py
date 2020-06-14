@@ -24,7 +24,7 @@ def run_test(pmars, othermars, w1, loadfiles, num_tests):
             pmars_cmd = "{} -b -F {} {} {} | tail -n +3".format(
                 pmars, w2_offset, w1, w2
             )
-            othermars_cmd = "{} -bk -F {} {} {}".format(othermars, w2_offset, w1, w2)
+            othermars_cmd = "{} -F {} {} {}".format(othermars, w2_offset, w1, w2)
             pmars_res = popen(pmars_cmd).read()
             othermars_res = popen(othermars_cmd).read()
 

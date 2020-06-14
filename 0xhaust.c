@@ -21,7 +21,7 @@ int rand_lim(int lower, int upper) {
 }
 
 int main(int argc, char **argv) {
-  srand ( time(NULL) );
+  srand(time(NULL));
   unsigned int rounds = 1;
   unsigned int cycles = 80000;
   int w2_position = -1;
@@ -71,16 +71,16 @@ int main(int argc, char **argv) {
     asm_fname(argv[optind + i], &warriors[i], coresize);
   }
   int *tally = calloc(2 * nwarriors, sizeof(int));
+  SimState_t *s = sim_alloc(2, coresize, maxprocs, cycles, coresize / 16);
 
   // TODO this may not work for warriors smaller than 100.  May be issues with
   // small cores or small minsep
   // TODO the apis around this should be reworked to expose minimal work between
   // rounds and between battles
   for (int i = 0; i < nwarriors; i++) {
-    SimState_t *s = alloc_sim(2, coresize, maxprocs, cycles, coresize / 16);
     for (int j = i + 1; j < nwarriors; j++) {
       for (int round = 0; round < rounds; round++) {
-        clear_sim(s);
+        sim_reset_round(s);
         sim_load_warrior(s, 0, warriors[i].code, warriors[i].len);
         int w2_pos = w2_position == -1
                          ? rand_lim((warriors[j].len + minsep) % coresize,
@@ -91,12 +91,11 @@ int main(int argc, char **argv) {
         field_t positions[2] = {0 + warriors[i].start,
                                 w2_pos + warriors[j].start};
         unsigned int results[2] = {};
-        int alive_count = sim(s, positions, results);
+        int alive_count = sim_simulate(s, positions, results);
         if (alive_count == 2) {
           tally[2 * i + 1]++;
           tally[2 * j + 1]++;
-        }
-        else if (results[0] == 0) {
+        } else if (results[0] == 0) {
           /* the first warrior died first */
           tally[2 * j]++;
         } else if (results[0] == 1) {
@@ -108,10 +107,9 @@ int main(int argc, char **argv) {
         }
       }
     }
-    free_sim(s);
+    sim_reset_round(s);
   }
   for (int i = 0; i < nwarriors; i++) {
     printf("%d %d\n", tally[2 * i], tally[2 * i + 1]);
   }
-
 }

@@ -75,7 +75,7 @@ static void free_pspaces(unsigned int nwar, pspace_t **pspaces);
  *
  * You can ignore pspaces if your warriors do not make use of pspace
  */
-SimState_t *alloc_sim(unsigned int nwar, unsigned int coresize,
+SimState_t *sim_alloc(unsigned int nwar, unsigned int coresize,
                       unsigned int processes, unsigned int cycles,
                       unsigned int pspace) {
   return _alloc_sim(coresize, pspace, cycles, processes, nwar);
@@ -84,11 +84,19 @@ SimState_t *alloc_sim(unsigned int nwar, unsigned int coresize,
 /*
  * Free memory associated with a simulator object
  */
-void free_sim(SimState_t *sim) { _free_sim(sim); }
+void sim_free(SimState_t *sim) { _free_sim(sim); }
 /*
  * Reset a core to be reused for another round or another battle
  */
-void clear_sim(SimState_t *sim) { _clear_sim(sim); }
+
+void sim_reset_round(SimState_t *sim) {
+  _clear_sim(sim);
+}
+
+void sim_reset_battle(SimState_t *sim) {
+  _clear_sim(sim);
+  sim_reset_pspaces(sim);
+}
 
 /*
  * copies in a warrior.
@@ -136,7 +144,7 @@ int sim_load_warrior(SimState_t *sim, unsigned int pos,
  * death tab similarly records at index 0 the first warrior to die, index 1 the
  * second etc
  */
-int sim(SimState_t *sim, field_t *war_pos_tab, unsigned int *death_tab) {
+int sim_simulate(SimState_t *sim, field_t *war_pos_tab, unsigned int *death_tab) {
   return simulate(sim, war_pos_tab, death_tab);
 }
 
