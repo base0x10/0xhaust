@@ -106,7 +106,7 @@ int sim_load_warrior(SimState_t *sim, unsigned int pos,
  *
  * returns number of living warriors
  */
-int sim_simulate(SimState_t *sim, field_t *war_pos_tab,
+int sim_simulate(SimState_t *sim, const field_t *const war_pos_tab,
                  unsigned int *death_tab);
 
 /*
