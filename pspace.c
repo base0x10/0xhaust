@@ -33,9 +33,9 @@ void pspace_free(pspace_t *p) {
 
 pspace_t *pspace_alloc(uint32_t pspacesize) {
   pspace_t *p;
-  if ((p = (pspace_t *)malloc(sizeof(pspace_t)))) {
+  if ((p = (pspace_t *)calloc(1, sizeof(pspace_t)))) {
     p->len = pspacesize;
-    if (!(p->ownmem = (field_t *)malloc(sizeof(field_t) * p->len))) {
+    if (!(p->ownmem = (field_t *)calloc(p->len, sizeof(field_t)))) {
       pspace_free(p);
       p = NULL;
     }

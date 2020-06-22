@@ -82,12 +82,12 @@ int main(int argc, char **argv) {
         /* Ready the simulator */
         sim_reset_round(s);
         sim_load_warrior(s, 0, warriors[i].code, warriors[i].len);
+
         int w2_pos = w2_position == -1
                          ? rand_lim((warriors[j].len + minsep) % coresize,
                                     coresize - minsep)
                          : w2_position;
         sim_load_warrior(s, w2_pos, warriors[j].code, warriors[j].len);
-
         field_t positions[2] = {0 + warriors[i].start,
                                 w2_pos + warriors[j].start};
         unsigned int results[2] = {};
@@ -110,7 +110,10 @@ int main(int argc, char **argv) {
     }
     sim_reset_round(s);
   }
+  sim_free(s);
   for (int i = 0; i < nwarriors; i++) {
     printf("%d %d\n", tally[2 * i], tally[2 * i + 1]);
   }
+  free(warriors);
+  free(tally);
 }
