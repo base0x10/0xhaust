@@ -90,9 +90,7 @@ enum {
   NOP,
   MUL,
   MODM,
-  DIV,
-  LDP,
-  STP /* 18 */
+  DIV, /* 16 */
 };
 
 enum {

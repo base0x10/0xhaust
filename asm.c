@@ -35,7 +35,6 @@
 #include <stdlib.h>
 
 #include "asm.h"
-#include "exhaust.h"
 #include "insn.h"
 #include "types.h"
 
@@ -53,7 +52,7 @@ static const str_toks_t str_toks[] = {
     {"MOD", TOK_MOD}, {"CMP", TOK_SEQ}, {"SEQ", TOK_SEQ},
     {"JMP", TOK_JMP}, {"JMN", TOK_JMN}, {"SNE", TOK_SNE},
     {"MUL", TOK_MUL}, {"DIV", TOK_DIV}, {"SLT", TOK_SLT},
-    {"NOP", TOK_NOP}, {"LDP", TOK_LDP}, {"STP", TOK_STP},
+    {"NOP", TOK_NOP},
 
     {"ORG", TOK_ORG}, /* pseudo-ops */
     {"END", TOK_END}, {"PIN", TOK_PIN}, {"START", TOK_START},
@@ -386,12 +385,7 @@ int asm_line(const char *line, insn_t *in, unsigned int CORESIZE, char *tok_buf,
     case TOK_NOP:
       op = NOP;
       break;
-    case TOK_LDP:
-      op = LDP;
-      break;
-    case TOK_STP:
-      op = STP;
-      break;
+      ;
     default:
       panic_bad_tok("an opcode");
   }
@@ -626,12 +620,6 @@ void dis1(char *s, insn_t in, unsigned int CORESIZE) {
       break;
     case NOP:
       op_s = "nop";
-      break;
-    case LDP:
-      op_s = "ldp";
-      break;
-    case STP:
-      op_s = "stp";
       break;
     default:
       op_s = "???";

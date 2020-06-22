@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     asm_fname(argv[optind + i], &warriors[i], coresize);
   }
   int *tally = calloc(2 * nwarriors, sizeof(int));
-  SimState_t *s = sim_alloc(2, coresize, maxprocs, cycles, coresize / 16);
+  SimState_t *s = sim_alloc(2, coresize, maxprocs, cycles);
 
   /* Main Loop simulation loops */
 
