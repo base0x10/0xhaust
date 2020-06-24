@@ -1,6 +1,6 @@
 #include "pspace.h"
 #include <stdint.h>
-#include <stdlib.h>
+#include <jemalloc/jemalloc.h>
 #include <string.h>
 
 field_t pspace_get(const pspace_t *p, uint32_t paddr) {

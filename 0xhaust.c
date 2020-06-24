@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <stdio.h>
+#include <jemalloc/jemalloc.h>
 #include <stdlib.h>
 #include <time.h>
 #include "asm.h"
