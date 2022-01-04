@@ -22,11 +22,13 @@
 // If this looks dumb it's because it is
 #ifndef MAXLENGTH
 #define HC_MAXLENGTH 100
-#endif
+#endif  // MAXLENGTH
 #ifdef MAXLENGTH
 #define HC_MAXLENGTH MAXLENGTH
 
-#endif
+#endif  // MAXLENGTH
+
+#endif  // HARDCODED_CONSTANTS
 
 #include "types.h"
 
