@@ -74,7 +74,6 @@ SimState_t *sim_alloc(unsigned int nwar, unsigned int coresize,
   return _alloc_sim(coresize, cycles, processes, nwar);
 }
 
-
 void reset_battle(SimState_t *sim) {
   if (!sim) return;
 
@@ -94,15 +93,12 @@ void reset_battle(SimState_t *sim) {
 #endif
 }
 
-
 /*
  * Free memory associated with a simulator object
  */
 void sim_free(SimState_t *sim) { _free_sim(sim); }
 
-void sim_reset_battle(SimState_t *sim) {
-	reset_battle(sim);
-}
+void sim_reset_battle(SimState_t *sim) { reset_battle(sim); }
 /*
  * copies in a warrior.
  */
@@ -263,8 +259,8 @@ int sim_mw(unsigned int nwar, const field_t *const war_pos_tab,
  * Internal Implementations
  *****************************************************************************/
 
-static SimState_t *_alloc_sim(unsigned int coreSize,
-                              unsigned int cycles, unsigned int maxProcesses,
+static SimState_t *_alloc_sim(unsigned int coreSize, unsigned int cycles,
+                              unsigned int maxProcesses,
                               unsigned int numWarriors) {
   SimState_t *sim = calloc(1, sizeof(SimState_t));
   if (!sim) {
@@ -280,10 +276,10 @@ static SimState_t *_alloc_sim(unsigned int coreSize,
   w_t *warTab = calloc(numWarriors, sizeof(w_t));
   insn_t *coreMem = calloc(coreSize, sizeof(insn_t));
   insn_t **queueMem = calloc(numWarriors * maxProcesses + 1, sizeof(insn_t *));
-  if (!warTab || !coreMem || !queueMem ) goto bad_alloc;
+  if (!warTab || !coreMem || !queueMem) goto bad_alloc;
 
-  *sim = (SimState_t){coreSize, cycles,   maxProcesses, numWarriors,
-                      warTab,   coreMem,    queueMem};
+  *sim = (SimState_t){coreSize, cycles,  maxProcesses, numWarriors,
+                      warTab,   coreMem, queueMem};
   return sim;
 bad_alloc:
   free(sim);

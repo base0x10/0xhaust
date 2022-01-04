@@ -18,7 +18,14 @@
 #define HC_MAXCYCLES 80000
 #define HC_MAXPROCESSES 8000
 #define HC_WARRIORS 2
+
+// If this looks dumb it's because it is
+#ifndef MAXLENGTH
 #define HC_MAXLENGTH 100
+#endif
+#ifdef MAXLENGTH
+#define HC_MAXLENGTH MAXLENGTH
+
 #endif
 
 #include "types.h"

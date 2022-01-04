@@ -22,7 +22,9 @@
  */
 
 /* max length for a compilied warrior */
+#ifndef MAXLENGTH
 #define MAXLENGTH 100
+#endif  // MAXLENGTH
 
 /* field_t holds values 0..CORESIZE-1 */
 /* 8000 coresize requires at least 13 bits */
