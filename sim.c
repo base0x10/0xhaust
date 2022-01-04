@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "asm.h"
-#include "exhaust.h"
 #include "insn.h"
 #include "sim.h"
 
@@ -55,13 +54,10 @@
 /* prototypes for internal functions */
 static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
                     unsigned int *death_tab);
-static SimState_t *_alloc_sim(unsigned int coreSize, unsigned int pspaceSize,
-                              unsigned int cycles, unsigned int maxProcesses,
+static SimState_t *_alloc_sim(unsigned int coreSize, unsigned int cycles,
+                              unsigned int maxProcesses,
                               unsigned int numWarriors);
 static void _free_sim(SimState_t *sim);
-static void _clear_sim(SimState_t *sim);
-static pspace_t **alloc_pspaces(unsigned int nwars, unsigned int pspacesize);
-static void free_pspaces(unsigned int nwar, pspace_t **pspaces);
 
 /******************************************************************************
  * Thread Safe Public API Implementation
@@ -72,29 +68,41 @@ static void free_pspaces(unsigned int nwar, pspace_t **pspaces);
 /*
  * Allocates a simulator object
  *
- * You can ignore pspaces if your warriors do not make use of pspace
  */
 SimState_t *sim_alloc(unsigned int nwar, unsigned int coresize,
-                      unsigned int processes, unsigned int cycles,
-                      unsigned int pspace) {
-  return _alloc_sim(coresize, pspace, cycles, processes, nwar);
+                      unsigned int processes, unsigned int cycles) {
+  return _alloc_sim(coresize, cycles, processes, nwar);
 }
+
+
+void reset_battle(SimState_t *sim) {
+  if (!sim) return;
+
+    /* if we have hardcoded constants, then we clear sim
+     * and if we don't have hardcoded constants, then we clear
+     * everything but the parameters stored in sim
+     */
+#ifndef HARDCODED_CONSTANTS
+  memset(sim->coreMem, 0, sizeof(insn_t) * sim->coreSize);
+  memset(sim->warTab, 0, sizeof(w_t) * sim->numWarriors);
+  memset(sim->queueMem, 0,
+         sizeof(insn_t *) * (sim->numWarriors * sim->maxProcesses + 1));
+#endif
+
+#ifdef HARDCODED_CONSTANTS
+  memset(sim, 0, sizeof(SimState_t));
+#endif
+}
+
 
 /*
  * Free memory associated with a simulator object
  */
 void sim_free(SimState_t *sim) { _free_sim(sim); }
 
-/*
- * Reset a core to be reused for another round or another battle
- */
-void sim_reset_round(SimState_t *sim) { _clear_sim(sim); }
-
 void sim_reset_battle(SimState_t *sim) {
-  _clear_sim(sim);
-  sim_reset_pspaces(sim);
+	reset_battle(sim);
 }
-
 /*
  * copies in a warrior.
  */
@@ -143,32 +151,6 @@ int sim_simulate(SimState_t *sim, const field_t *const war_pos_tab,
   return simulate(sim, war_pos_tab, death_tab);
 }
 
-/*
- * Refer to README for how to use pspace functions
- */
-pspace_t **sim_get_pspaces(SimState_t *sim) {
-  if (sim) return sim->pspaces;
-  return NULL;
-}
-
-pspace_t *sim_get_pspace(SimState_t *sim, unsigned int nwar) {
-  if (sim) return sim->pspaces[nwar];
-  return NULL;
-}
-
-void sim_clear_pspaces(SimState_t *sim) {
-  for (int i = 0; i < sim->numWarriors; i++) {
-    pspace_clear(sim->pspaces[i]);
-    pspace_set(sim->pspaces[i], 0, sim->coreSize - 1);
-  }
-}
-
-void sim_reset_pspaces(SimState_t *sim) {
-  for (int i = 0; i < sim->numWarriors; i++) {
-    pspace_privatise(sim->pspaces[i]);
-  }
-  sim_clear_pspaces(sim);
-}
 #endif /* not SINGLE_THREADED_API */
 
 /******************************************************************************
@@ -180,14 +162,12 @@ static SimState_t *globalstate;
 
 insn_t *sim_alloc_bufs(unsigned int nwar, unsigned int coresize,
                        unsigned int processes, unsigned int cycles) {
-  int pspacesize = coresize / 16 == 0 ? 1 : coresize / 16;
-  return sim_alloc_bufs2(nwar, coresize, processes, cycles, pspacesize);
+  return sim_alloc_bufs2(nwar, coresize, processes, cycles);
 }
 insn_t *sim_alloc_bufs2(unsigned int nwar, unsigned int coresize,
-                        unsigned int processes, unsigned int cycles,
-                        unsigned int pspace) {
+                        unsigned int processes, unsigned int cycles) {
   _free_sim(globalstate);
-  globalstate = _alloc_sim(coresize, pspace, cycles, processes, nwar);
+  globalstate = _alloc_sim(coresize cycles, processes, nwar);
   if (globalstate) return globalstate->coreMem;
   return NULL;
 }
@@ -195,46 +175,6 @@ insn_t *sim_alloc_bufs2(unsigned int nwar, unsigned int coresize,
 void sim_free_bufs() { _free_sim(globalstate); }
 
 void sim_clear_core(void) { _clear_sim(globalstate); }
-
-pspace_t **sim_get_pspaces(void) {
-  if (globalstate) return globalstate->pspaces;
-  return NULL;
-}
-
-pspace_t *sim_get_pspace(unsigned int war_id) {
-  if (globalstate) return globalstate->pspaces[war_id];
-  return NULL;
-}
-
-void sim_clear_pspaces() {
-#ifdef HARDCODED_CONSTANTS
-  int nwar = HC_WARRIORS;
-  unsigned int coreSize = HC_CORESIZE;
-#endif
-#ifndef HARDCODED_CONSTANTS
-  int nwar = globalstate->numWarriors;
-  unsigned int coreSize = globalstate->coreSize;
-#endif
-
-  for (int i = 0; i < nwar; i++) {
-    pspace_clear(globalstate->pspaces[i]);
-    pspace_set(globalstate->pspaces[i], 0, coreSize - 1);
-  }
-}
-
-void sim_reset_pspaces() {
-#ifdef HARDCODED_CONSTANTS
-  int nwar = HC_WARRIORS;
-#endif
-#ifndef HARDCODED_CONSTANTS
-  int nwar = globalstate->numWarriors;
-#endif
-
-  for (int i = 0; i < nwar; i++) {
-    pspace_privatise(globalstate->pspaces[i]);
-  }
-  sim_clear_pspaces();
-}
 
 int sim_load_warrior(unsigned int pos, const insn_t *const code,
                      unsigned int len) {
@@ -314,13 +254,6 @@ int sim_mw(unsigned int nwar, const field_t *const war_pos_tab,
   if (alive_count >= 0) {
     unsigned int nalive = alive_count;
     unsigned int i;
-
-    for (i = 0; i < nwar; i++) {
-      pspace_set(globalstate->pspaces[i], 0, nalive);
-    }
-    for (i = 0; i < nwar - nalive; i++) {
-      pspace_set(globalstate->pspaces[death_tab[i]], 0, 0);
-    }
   }
   return alive_count;
 }
@@ -330,7 +263,7 @@ int sim_mw(unsigned int nwar, const field_t *const war_pos_tab,
  * Internal Implementations
  *****************************************************************************/
 
-static SimState_t *_alloc_sim(unsigned int coreSize, unsigned int pspaceSize,
+static SimState_t *_alloc_sim(unsigned int coreSize,
                               unsigned int cycles, unsigned int maxProcesses,
                               unsigned int numWarriors) {
   SimState_t *sim = calloc(1, sizeof(SimState_t));
@@ -344,21 +277,19 @@ static SimState_t *_alloc_sim(unsigned int coreSize, unsigned int pspaceSize,
 #endif
 
 #ifndef HARDCODED_CONSTANTS
-  pspace_t **pspaces = alloc_pspaces(numWarriors, pspaceSize);
   w_t *warTab = calloc(numWarriors, sizeof(w_t));
   insn_t *coreMem = calloc(coreSize, sizeof(insn_t));
   insn_t **queueMem = calloc(numWarriors * maxProcesses + 1, sizeof(insn_t *));
-  if (!warTab || !coreMem || !queueMem || !pspaces) goto bad_alloc;
+  if (!warTab || !coreMem || !queueMem ) goto bad_alloc;
 
-  *sim = (SimState_t){coreSize, pspaceSize, cycles,   maxProcesses, numWarriors,
-                      warTab,   coreMem,    queueMem, pspaces};
+  *sim = (SimState_t){coreSize, cycles,   maxProcesses, numWarriors,
+                      warTab,   coreMem,    queueMem};
   return sim;
 bad_alloc:
   free(sim);
   free(coreMem);
   free(warTab);
   free(queueMem);
-  free_pspaces(numWarriors, pspaces);
   return NULL;
 #endif
 }
@@ -367,57 +298,11 @@ static void _free_sim(SimState_t *sim) {
   if (!sim) return;
 
 #ifndef HARDCODED_CONSTANTS
-  free_pspaces(sim->numWarriors, sim->pspaces);
   free(sim->warTab);
   free(sim->coreMem);
   free(sim->queueMem);
 #endif  // HARDCODED_CONSTANTS
-
   free(sim);
-}
-
-static void _clear_sim(SimState_t *sim) {
-  if (!sim) return;
-
-    /* if we have hardcoded constants, then we clear sim
-     * and if we don't have hardcoded constants, then we clear
-     * everything but the parameters stored in sim
-     */
-#ifndef HARDCODED_CONSTANTS
-  free_pspaces(sim->numWarriors, sim->pspaces);
-  sim->pspaces = alloc_pspaces(sim->numWarriors, sim->pspaceSize);
-  memset(sim->coreMem, 0, sizeof(insn_t) * sim->coreSize);
-  memset(sim->warTab, 0, sizeof(w_t) * sim->numWarriors);
-  memset(sim->queueMem, 0,
-         sizeof(insn_t *) * (sim->numWarriors * sim->maxProcesses + 1));
-#endif
-
-#ifdef HARDCODED_CONSTANTS
-  memset(sim, 0, sizeof(SimState_t));
-#endif
-}
-
-static pspace_t **alloc_pspaces(unsigned int numWarriors,
-                                unsigned int pspacesize) {
-  if (numWarriors == 0) return NULL;
-  pspace_t **pspaces = calloc(numWarriors, sizeof(pspace_t *));
-  if (!pspaces) return pspaces;
-  for (int i = 0; i < numWarriors; i++) {
-    pspaces[i] = pspace_alloc(pspacesize);
-    if (!pspaces[i]) {
-      free_pspaces(i - 1, pspaces);
-      return NULL;
-    }
-  }
-  return pspaces;
-}
-
-static void free_pspaces(unsigned int numWarriors, pspace_t **pspaces) {
-  if (!pspaces) return;
-  for (int i = 0; i < numWarriors; i++) {
-    pspace_free(pspaces[i]);
-  }
-  free(pspaces);
 }
 
 /* RESULTS
@@ -484,20 +369,6 @@ static void free_pspaces(unsigned int numWarriors, pspace_t **pspaces) {
     if ((z) >= core_sz) (z) += core_sz; \
   } while (0)
 
-/* private macros to access p-space. */
-#define UNSAFE_PSPACE_SET(warid, paddr, val)       \
-  do {                                             \
-    if (paddr) {                                   \
-      sim->pspaces[(warid)]->mem[(paddr)] = (val); \
-    } else {                                       \
-      sim->pspaces[(warid)]->lastresult = (val);   \
-    }                                              \
-  } while (0)
-
-#define UNSAFE_PSPACE_GET(warid, paddr)          \
-  ((paddr) ? sim->pspaces[(warid)]->mem[(paddr)] \
-           : sim->pspaces[(warid)]->lastresult)
-
 static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
                     unsigned int *death_tab) {
   /*
@@ -555,7 +426,6 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
    */
 #ifndef HARDCODED_CONSTANTS
   unsigned int core_sz = sim->coreSize;
-  unsigned int pspace_sz = sim->pspaceSize;
   unsigned int cycles = sim->cycles * sim->numWarriors;
   unsigned int max_proc = sim->maxProcesses;
   unsigned int nwar = sim->numWarriors;
@@ -563,7 +433,6 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
 
 #ifdef HARDCODED_CONSTANTS
   unsigned int core_sz = HC_CORESIZE;
-  unsigned int pspace_sz = HC_PSPACESIZE;
   unsigned int cycles = HC_MAXCYCLES * HC_WARRIORS;
   unsigned int max_proc = HC_MAXPROCESSES;
   unsigned int nwar = HC_WARRIORS;
@@ -1188,38 +1057,6 @@ static int simulate(SimState_t *sim, const field_t *const war_pos_tab,
       case _OP(NOP, mAB):
       case _OP(NOP, mB):
       case _OP(NOP, mBA):
-        break;
-
-      case _OP(LDP, mA):
-        ptb->a = UNSAFE_PSPACE_GET(w->id, ra_a % pspace_sz);
-        break;
-      case _OP(LDP, mAB):
-        ptb->b = UNSAFE_PSPACE_GET(w->id, ra_a % pspace_sz);
-        break;
-      case _OP(LDP, mBA):
-        ptb->a = UNSAFE_PSPACE_GET(w->id, ra_b % pspace_sz);
-        break;
-      case _OP(LDP, mF):
-      case _OP(LDP, mX):
-      case _OP(LDP, mI):
-      case _OP(LDP, mB):
-        ptb->b = UNSAFE_PSPACE_GET(w->id, ra_b % pspace_sz);
-        break;
-
-      case _OP(STP, mA):
-        UNSAFE_PSPACE_SET(w->id, rb_a % pspace_sz, ra_a);
-        break;
-      case _OP(STP, mAB):
-        UNSAFE_PSPACE_SET(w->id, rb_b % pspace_sz, ra_a);
-        break;
-      case _OP(STP, mBA):
-        UNSAFE_PSPACE_SET(w->id, rb_a % pspace_sz, ra_b);
-        break;
-      case _OP(STP, mF):
-      case _OP(STP, mX):
-      case _OP(STP, mI):
-      case _OP(STP, mB):
-        UNSAFE_PSPACE_SET(w->id, rb_b % pspace_sz, ra_b);
         break;
 
 #if DEBUG > 0

@@ -52,9 +52,7 @@ enum {
   TOK_NOP,
   TOK_MUL,
   TOK_MOD,
-  TOK_DIV,
-  TOK_LDP,
-  TOK_STP, /* 18 */
+  TOK_DIV, /* 16 */
   TOK_OPCODE_STOP,
 
   TOK_PSEUDOOP_START,
